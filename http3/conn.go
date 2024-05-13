@@ -37,6 +37,7 @@ type Connection interface {
 
 type connection struct {
 	quic.Connection
+	ctx context.Context
 
 	perspective protocol.Perspective
 	logger      *slog.Logger
@@ -53,6 +54,7 @@ type connection struct {
 }
 
 func newConnection(
+	ctx context.Context,
 	quicConn quic.Connection,
 	enableDatagrams bool,
 	perspective protocol.Perspective,
@@ -60,6 +62,7 @@ func newConnection(
 ) *connection {
 	c := &connection{
 		Connection:       quicConn,
+		ctx:              ctx,
 		perspective:      perspective,
 		logger:           logger,
 		enableDatagrams:  enableDatagrams,
@@ -67,6 +70,7 @@ func newConnection(
 		receivedSettings: make(chan struct{}),
 		streams:          make(map[protocol.StreamID]*datagrammer),
 	}
+
 	return c
 }
 
@@ -280,3 +284,5 @@ func (c *connection) ReceivedSettings() <-chan struct{} { return c.receivedSetti
 // Settings returns the settings received on this connection.
 // It is only valid to call this function after the channel returned by ReceivedSettings was closed.
 func (c *connection) Settings() *Settings { return c.settings }
+
+func (c *connection) Context() context.Context { return c.ctx }
